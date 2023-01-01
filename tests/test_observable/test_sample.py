@@ -3,6 +3,7 @@ import unittest
 import reactivex
 from reactivex import operators as ops
 from reactivex.testing import ReactiveTest, TestScheduler
+from reactivex.testing.marbles import marbles_testing
 
 on_next = ReactiveTest.on_next
 on_completed = ReactiveTest.on_completed
@@ -15,11 +16,6 @@ created = ReactiveTest.created
 
 class RxException(Exception):
     pass
-
-
-# Helper function for raising exceptions within lambdas
-def _raise(ex):
-    raise RxException(ex)
 
 
 class TestSample(unittest.TestCase):
@@ -95,3 +91,16 @@ class TestSample(unittest.TestCase):
 
         results = scheduler.start(create)
         assert results.messages == []
+
+    @unittest.expectedFailure
+    def test_completed(self):
+        with marbles_testing(timespan=1.0) as (start, _cold, hot, exp):
+
+            source = hot("    ----a---b----c----------f--|", None, None)
+
+            expected = exp("  ----------b---------c------|", None, None)
+            # what we actually get:
+            #                 ----------b---------c---------(f|)
+            # Time            ----------!---------!---------!
+            result = start(source.pipe(ops.sample(10)))
+            assert result == expected
