@@ -13,16 +13,7 @@ disposed = ReactiveTest.disposed
 created = ReactiveTest.created
 
 
-class RxException(Exception):
-    pass
-
-
-# Helper function for raising exceptions within lambdas
-def _raise(ex):
-    raise RxException(ex)
-
-
-class TestDistinctUntilChanged(unittest.TestCase):
+class TestDistinct(unittest.TestCase):
     def test_distinct_defaultcomparer_all_distinct(self):
         scheduler = TestScheduler()
         xs = scheduler.create_hot_observable(
@@ -85,7 +76,7 @@ class TestDistinctUntilChanged(unittest.TestCase):
         )
 
         def create():
-            def key_mapper(x):
+            def key_mapper(x: int):
                 return x / 2
 
             return xs.pipe(ops.distinct(key_mapper))
@@ -114,7 +105,7 @@ class TestDistinctUntilChanged(unittest.TestCase):
         )
 
         def create():
-            def key_mapper(x):
+            def key_mapper(x: int):
                 return math.floor(x / 2.0)
 
             return xs.pipe(ops.distinct(key_mapper))
@@ -142,7 +133,7 @@ class TestDistinctUntilChanged(unittest.TestCase):
         )
 
         def create():
-            def key_mapper(x):
+            def key_mapper(x: int):
                 if not x:
                     raise Exception(ex)
                 else:
