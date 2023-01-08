@@ -4196,7 +4196,7 @@ def window_with_time_or_count(
 
 def with_latest_from(
     *sources: Observable[Any],
-) -> Callable[[Observable[Any]], Observable[Any]]:
+) -> Callable[[Observable[Any]], Observable[Tuple[Any, ...]]]:
     """The `with_latest_from` operator.
 
     Merges the specified observable sequences into one observable
@@ -4214,7 +4214,7 @@ def with_latest_from(
 
     Examples:
         >>> op = with_latest_from(obs1)
-        >>> op = with_latest_from([obs1, obs2, obs3])
+        >>> op = with_latest_from(obs1, obs2, obs3)
 
     Returns:
         An operator function that takes an observable source and

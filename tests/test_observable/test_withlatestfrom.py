@@ -2,6 +2,7 @@ import unittest
 
 import reactivex
 from reactivex import operators as ops
+from reactivex.operators._withlatestfrom import with_latest_from_
 from reactivex.testing import ReactiveTest, TestScheduler
 
 on_next = ReactiveTest.on_next
@@ -25,6 +26,23 @@ def _raise(ex: str) -> None:
 
 
 class TestWithLatestFrom(unittest.TestCase):
+    def test_with_latest_from_typing(self):
+        ex = "ex"
+        scheduler = TestScheduler()
+        msgs1 = [on_next(150, 1), on_next(215, 2), on_next(225, 4), on_completed(230)]
+        msgs2 = [on_next(150, 1), on_next(235, 6), on_next(240, 7), on_error(245, ex)]
+        e1 = scheduler.create_hot_observable(msgs1)
+        e2 = scheduler.create_hot_observable(msgs2)
+
+        out = e1.pipe(ops.with_latest_from(e2))  # Observable[Tuple[Any, ...]]
+        out_typed = e1.pipe(with_latest_from_(e2))  # Observable[Tuple[int, int]]
+        obs = scheduler.create_observer()
+        obs_typed = scheduler.create_observer()
+        out.subscribe(obs)
+        out_typed.subscribe(obs_typed)
+        scheduler.start()
+        assert obs.messages == obs_typed.messages
+
     def test_with_latest_from_never_never(self):
         scheduler = TestScheduler()
         e1 = reactivex.never()
