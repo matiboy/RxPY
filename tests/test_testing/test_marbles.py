@@ -170,6 +170,7 @@ class TestTestContext(unittest.TestCase):
             obs = cold("     12--3--4--5-|")
             expected = exp(" 12--3--4--5-|")
             "                012345678901234567890"
+            sub = "     ^-----------!"
 
             def create():
                 return obs
@@ -187,4 +188,22 @@ class TestTestContext(unittest.TestCase):
                 return obs
 
             results = start(create)
+            assert results == expected
+
+    def test_start_with_hot__subscribedoffset(self):
+        with marbles_testing(subscribed=100.0, timespan=10.0) as (
+            start,
+            _cold,
+            hot,
+            _exp,
+        ):
+            obs = hot("     --3--4--5-|", None, None)
+            expected = [
+                ReactiveTest.on_next(120, 3),
+                ReactiveTest.on_next(150, 4),
+                ReactiveTest.on_next(180, 5),
+                ReactiveTest.on_completed(200),
+            ]
+
+            results = start(obs)
             assert results == expected

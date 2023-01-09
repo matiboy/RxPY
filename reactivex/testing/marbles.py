@@ -2,11 +2,11 @@ from contextlib import contextmanager
 from typing import Any, Dict, Generator, List, NamedTuple, Optional, Tuple, Union
 from warnings import warn
 
-import reactivex
 from reactivex import Observable, typing
 from reactivex.notification import Notification, OnError, OnNext
 from reactivex.observable.marbles import parse
 from reactivex.scheduler import NewThreadScheduler
+from reactivex.testing.hotobservable import HotObservable
 from reactivex.typing import Callable, RelativeTime
 
 from .reactivetest import ReactiveTest
@@ -37,6 +37,9 @@ class MarblesContext(NamedTuple):
 @contextmanager
 def marbles_testing(
     timespan: RelativeTime = 1.0,
+    created: float = 100.0,
+    subscribed: float = 200.0,
+    disposed: float = 1000.0,
 ) -> Generator[MarblesContext, None, None]:
     """
     Initialize a :class:`rx.testing.TestScheduler` and return a namedtuple
@@ -75,9 +78,6 @@ def marbles_testing(
     """
 
     scheduler = TestScheduler()
-    created = 100.0
-    disposed = 1000.0
-    subscribed = 200.0
     start_called = False
     outside_of_context = False
 
@@ -141,28 +141,26 @@ def marbles_testing(
         error: Optional[Exception] = None,
     ) -> Observable[Any]:
         check()
-        return reactivex.from_marbles(
-            string,
-            timespan=timespan,
-            lookup=lookup,
-            error=error,
+        messages = parse(
+            string, timespan=timespan, lookup=lookup, error=error, raise_stopped=True
         )
+        return scheduler.create_cold_observable(messages_to_records(messages))
 
     def test_hot(
         string: str,
         lookup: Optional[Dict[Union[str, float], Any]] = None,
         error: Optional[Exception] = None,
-    ) -> Observable[Any]:
+    ) -> HotObservable[Any]:
         check()
-        hot_obs: Observable[Any] = reactivex.hot(
+        messages = parse(
             string,
             timespan=timespan,
-            duetime=subscribed,
+            time_shift=subscribed,
             lookup=lookup,
             error=error,
-            scheduler=scheduler,
+            raise_stopped=True,
         )
-        return hot_obs
+        return scheduler.create_hot_observable(messages_to_records(messages))
 
     try:
         yield MarblesContext(test_start, test_cold, test_hot, test_expected)
